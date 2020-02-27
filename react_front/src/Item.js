@@ -6,7 +6,7 @@ class AddItem extends Component{
     constructor(props) {
       super(props);
       this.state = {
-        player: props.playerID,
+        player: props.player,
         items: [],
         itemSelection: null,
         fetching: false,
@@ -34,23 +34,21 @@ class AddItem extends Component{
 
     handleSubmit = (e) => {
         e.preventDefault();
-        console.log(this.state);
         const my_data = {
             'item_id': this.state.itemSelection,
         };
         this.setState({fetching: true})
-        axios.put(`http://127.0.0.1:8000/arena/players/${this.state.player}/add_item/`, my_data)
+        axios.put(`http://127.0.0.1:8000/arena/players/${this.state.player.id}/add_item/`, my_data)
           .then(response => {
             this.setState({
-                player: response.data.id,
+                player: response.data,
                 fetching: false
             })
+            this.props.updateParent(this.state.player);
           });
-        this.props.updateParent(this.state);
     }
 
     handleChange = (e) => {
-        console.log(e.target);
         this.setState({
              itemSelection: e.target.value
         });
@@ -86,7 +84,6 @@ class AddItem extends Component{
 }
 
 function Shield(props) {
-    console.log(props);
     const shields = props.items.map(item => {
         if(item.damage_dice === 0 && item.adj_ma === 0) {
             return (

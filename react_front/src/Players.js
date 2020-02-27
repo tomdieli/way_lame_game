@@ -36,13 +36,10 @@ class Players extends Component {
         this.fetchPlayers();
     }
 
-    childDidUpdate = (props) => {
-        const playerIndex = this.state.players.findIndex((obj => obj.id === props.player.id));
-        const old_player = this.state.players[playerIndex];
-        const new_player = old_player;
-        new_player.equipped_items.append(props.itemSelection);
+    childDidUpdate = (player) => {
+        const playerIndex = this.state.players.findIndex((obj => obj.id === player.id));
         let new_players = this.state.players;
-        new_players.splice(playerIndex, new_player);
+        new_players[playerIndex] = player;
         this.setState({
             players: new_players
         });
@@ -68,7 +65,7 @@ class Players extends Component {
                     <div>Items:</div>
                     <div>{itemsList}</div>
                     <button onClick={() => {this.deletePlayer(player.id)}}>Delete Player</button>
-                    <AddItem playerID={player.id} updateParent={() => this.childDidUpdate}/>
+                    <AddItem player={player} updateParent={this.childDidUpdate} />
                 </div>
             );
         })
