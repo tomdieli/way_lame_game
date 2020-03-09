@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import axios from 'axios';
+import './App.css';
 
 class Game extends Component {
     constructor(props) {
@@ -49,10 +50,27 @@ class Game extends Component {
         this.setState({fetching: true});
         axios.put('http://127.0.0.1:8000/arena/players/' + attacker + '/attack/', data)
           .then(res => {
+            console.log(res.data);
+            const p1 = res.data[1].findIndex((player) => player.id === this.state.player1.id)
+            const p2 = res.data[1].findIndex((player) => player.id === this.state.player2.id)
             const dialog = this.state.dialog + res.data[0].message + '\n';
             this.setState({
-              fetching: false,
-              dialog: dialog
+                player1: res.data[1][p1],
+                player2: res.data[1][p2],
+                fetching: false,
+                dialog: dialog
+            });
+          });
+    }
+
+    nextTurn = () => {
+        this.setState({fetching: true});
+        axios.put('http://127.0.0.1:8000/arena/games/' + this.state.id + '/next_turn/')
+          .then(res => {
+            console.log(res.data.current_round);
+            this.setState({
+                fetching: false,
+                turn: res.data.current_round
             });
           });
     }
@@ -64,11 +82,13 @@ class Game extends Component {
             return (
                 <div>
                     <h1>Welcome to Game {this.state.id}!!!</h1>
+                    <h3>Round {this.state.turn}</h3>
                     <div align="left">
                         <Player player={this.state.player1} attack={this.attack} />
                         <Player player={this.state.player2} attack={this.attack} />
                     </div>
-                    <textarea readOnly={true} value={this.state.dialog} />
+                    <textarea readOnly={true} value={this.state.dialog} rows="10" cols="80"/>
+                    <button onClick={this.nextTurn}>Next Turn</button>
                 </div>
             )
         }
@@ -85,7 +105,13 @@ function Player(props) {
     }
 
     function getPlayerOptions(player, attack) {
-        return <button type="submit" onClick={() => {attack(player.id)}}>Attack</button>;
+        console.log(player.prone);
+        return (
+            <div>
+            <button type="submit" disabled={player.prone} onClick={() => {attack(player.id)}}>Attack</button>
+            <button type="submit" disabled={!player.prone} onClick={() => {attack(player.id)}}>Attack</button>
+            </div>
+            )
     }
 
     if(props.player === null) {
@@ -100,6 +126,7 @@ function Player(props) {
                 <div>ST: {player.strength}</div>
                 <div>DX: {player.dexterity} ({player.adjusted_dex})</div>
                 <div>MA: {player.movement_allowance} ({player.adjusted_ma})</div>
+                <div>HITS: {player.hits} </div>
                 <div>Items:</div>
                 <div>{itemsList}</div>
                 <div>{buttonList}</div>

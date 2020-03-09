@@ -74,7 +74,7 @@ export default class NewGame extends Component{
                 <PlayerChoice players={this.state.players} handleChange={this.handleChangeP1} />
                 VS
                 <PlayerChoice players={this.state.players} handleChange={this.handleChangeP2} />
-                <button type="submit"></button>
+                <button type="submit">Start Game</button>
             </form>
             </div>
           );
