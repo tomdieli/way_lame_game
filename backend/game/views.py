@@ -17,11 +17,16 @@ def home(request):
 
 @api_view(['POST',])
 def new_game(request):
-    player1 = request.data.get('player1')
-    player2 = request.data.get('player2')
+    player1_id = request.data.get('player1')
+    player2_id = request.data.get('player2')
+    print(player1_id)
+    print(player2_id)
+    player1 = Figure.objects.get(id=player1_id)
+    player2 = Figure.objects.get(id=player2_id)
     new_game = Game.objects.create()
     new_game.players.add(player1)
     new_game.players.add(player2)
+    new_game.save()
     serializer = GameSerializer(new_game)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -64,6 +69,7 @@ def new_player(request):
 def next_turn(request, game_id):
     current_game = Game.objects.get(id=game_id)
     players = current_game.players.all()
+    print(players)
     for player in players:
         if player.tmp_dx_mod:
             player.adjusted_dex += 2
@@ -76,8 +82,17 @@ def next_turn(request, game_id):
             player.save()
     current_game.current_round += 1
     current_game.save()
-    serializer = GameSerializer(current_game)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    game_serializer = GameSerializer(current_game)
+    figure_serializer = FigureSerializer(players, many=True)
+    new_turn_info = [game_serializer.data, figure_serializer.data]
+
+    content = {
+        'status': 1, 
+        'responseCode' : status.HTTP_200_OK, 
+        'data': new_turn_info,
+    }
+
+    return Response(content)
 
 
 @api_view(['PUT',])
@@ -109,7 +124,6 @@ def add_item(request, player_id):
     # TODO: check for adequate slots
     current_slots = player_obj.items.all().exclude(equip_pts=0)
     slot_points = sum(slot.equip_pts for slot in current_slots)
-    # print("SLOTS: %s, SLOT POINTS: %s" % (current_slots, slot_points))
     if slot_points + item_obj.equip_pts > 2:
         return Response(
                 "Insufficient slots for that Item. player has: %s, required: %s"
@@ -201,7 +215,6 @@ def attack(request, player_id):
     result['message'] = message
     attack_data = [result,]
     attack_data.append(serializer.data)
-    # print(message)
     return Response(data=attack_data, status=status.HTTP_200_OK)
 
 @api_view(['PUT',])
@@ -216,6 +229,8 @@ def defend(request, player_id):
 @api_view(['PUT',])
 def get_up(request, player_id):
     prone_one = Figure.objects.get(id=player_id)
+    print(prone_one.prone)
     prone_one.prone = False
     prone_one.save()
+    print(prone_one.prone)
     return Response("Player % get up from prone position.", status=status.HTTP_200_OK)

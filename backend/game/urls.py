@@ -15,6 +15,6 @@ urlpatterns = [
     path('players/<player_id>/add_item/', views.add_item, name='add-item'),
     path('players/<player_id>/attack/', views.attack, name='attack'),
     path('players/<player_id>/defend/', views.defend, name='defend'),
-    path('players/<player_id>/get_up/', views.defend, name='get-up'),
+    path('players/<player_id>/get_up/', views.get_up, name='get-up'),
     path('new_item', views.new_item, name='new-item'),
 ]

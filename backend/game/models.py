@@ -42,5 +42,5 @@ class Game(models.Model):
     current_round = models.PositiveIntegerField(default=1)
     players = models.ManyToManyField(
             Figure,
-            related_name='players',
+            related_name='players_list',
     )

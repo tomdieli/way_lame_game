@@ -97,7 +97,8 @@ function Shield(props) {
     })
     if(shields) {
     return (
-        <select name="shields" onChange={props.handleChange}>
+        <select name="shields" defaultValue="" onChange={props.handleChange}>
+            <option value="" disabled hidden>Choose Sheild...</option>
             {shields}
         </select>
     );
@@ -121,7 +122,8 @@ function Armour(props) {
     })
     if(armours) {
     return (
-        <select name="armours" onChange={props.handleChange}>
+        <select name="armours" defaultValue="" onChange={props.handleChange}>
+            <option value="" disabled hidden>Choose Armor...</option>
             {armours}
         </select>
     );
@@ -144,7 +146,8 @@ function Weapon(props) {
     })
     if(weapons) {
     return (
-        <select name="weapons" onChange={props.handleChange}>
+        <select name="weapons" defaultValue="" onChange={props.handleChange}>
+            <option value="" disabled hidden>Choose Weapon...</option>
             {weapons}
         </select>
     );

@@ -31,9 +31,8 @@ export default class NewGame extends Component{
     }
 
     startGame = () => {
-      const player1 = this.state.players.find(x => x.id === this.state.player1);
-      const player2 = this.state.players.find(x => x.id === this.state.player2);
-      const data = {'player1': player1, 'player2': player2};
+      //console.log(this.state);
+      const data = {'player1': this.state.player1, 'player2': this.state.player2};
       this.setState({fetching: true});
       axios.post('http://127.0.0.1:8000/arena/new_game/', data)
           .then(res => {
@@ -63,7 +62,7 @@ export default class NewGame extends Component{
       if (this.state.gameID !== null) {
         return (
           <div>
-            <Game props={this.state} />
+            <Game {...this.state} />
           </div>
         )
       }

@@ -3,12 +3,6 @@ from rest_framework import serializers
 from .models import Game, Figure, Item
 
 
-class GameSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Game
-        fields = ('id', 'current_round')
-
-
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
@@ -39,3 +33,11 @@ class FigureSerializer(serializers.ModelSerializer):
 
     def get_equipped_items(self, figure):
         return ItemSerializer(figure.items.all(), many=True).data
+
+
+class GameSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Game
+        fields = ('id', 'current_round')
+
