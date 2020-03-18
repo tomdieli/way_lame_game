@@ -12,7 +12,7 @@ class GameTests(APITestCase):
     def test_create_game_ok(self):
         player1 = Figure.objects.create()
         player2 = Figure.objects.create()
-        data = {"player1": player1, "player2": player2}
+        data = {"player1": player1.id, "player2": player2.id}
         url = reverse('new-game')
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -25,7 +25,6 @@ class FigureTests(APITestCase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Figure.objects.count(), 1)
-        # print(response.json())
 
     def test_update_attributes(self):
         player = Figure.objects.create()
@@ -58,51 +57,45 @@ class PlayerItemTests(APITestCase):
         self.player = Figure.objects.create()
 
     def test_add_weapon(self):
-        Item.objects.create(
+        item = Item.objects.create(
                 name='Dagger',
                 damage_dice=1,
                 damage_mod=-1,
                 equip_pts=1,
         )
         url = reverse('add-item', args=(self.player.id, ))
-        response = self.client.put(url, data={'name': 'Dagger'})
+        response = self.client.put(url, data={'item_id': item.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # pprint.pprint(response.json())
 
     def test_add_armour(self):
-        Item.objects.create(
+        item = Item.objects.create(
                 name='Leather Armour',
                 hit_takes=2,
                 adj_ma=8,
                 dx_adj=2
         )
         url = reverse('add-item', args=(self.player.id, ))
-        response = self.client.put(url, data={'name': 'Leather Armour'})
+        response = self.client.put(url, data={'item_id': item.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # pprint.pprint(response.json())
 
     def test_add_shield(self):
-        Item.objects.create(
+        item_one = Item.objects.create(
                 name='Dagger',
                 damage_dice=1,
                 damage_mod=-1,
                 equip_pts=1,
         )
-        Item.objects.create(
+        item = Item.objects.create(
                 name='Large Shield',
                 hit_takes=2,
                 equip_pts=1,
                 dx_adj=1
         )
         url = reverse('add-item', args=(self.player.id, ))
-        response = self.client.put(url, data={'name': 'Large Shield'})
+        response = self.client.put(url, data={'item_id': item.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        #self.assertEqual(response.data.get('weapon_name'), 'Dagger')
-        # pprint.pprint(response.json())
-        response = self.client.put(url, data={'name': 'Dagger'})
+        response = self.client.put(url, data={'item_id': item_one.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # pprint.pprint(response.json())
-
 
 
 class PlayerAttackTests(APITestCase):
@@ -136,16 +129,16 @@ class PlayerAttackTests(APITestCase):
         response = self.client.put(url, data=flavius_args)
         # add flavius' Items
         url = reverse('add-item', args=(self.player_one.id, ))
-        response = self.client.put('http://127.0.0.1:8000'+url, data={'name': 'Short Sword'})
-        response = self.client.put('http://127.0.0.1:8000'+url, data={'name': 'Large Shield'})
+        response = self.client.put('http://127.0.0.1:8000'+url, data={'item_id': weapon.id})
+        response = self.client.put('http://127.0.0.1:8000'+url, data={'item_id': shield.id})
         # self.player_one.items.add(weapon, armour)
         wulf_args = {'name': 'Wulf', 'st': 6, 'dx': 2}
         url = reverse('edit-attributes', args=(self.player_two.id, ))
         response = self.client.put('http://127.0.0.1:8000'+url, data=wulf_args)
         # add wulf's Items
         url = reverse('add-item', args=(self.player_two.id, ))
-        response = self.client.put('http://127.0.0.1:8000'+url, data={'name': 'Short Sword'})
-        response = self.client.put('http://127.0.0.1:8000'+url, data={'name': 'Leather Armour'})
+        response = self.client.put('http://127.0.0.1:8000'+url, data={'item_id': weapon.id})
+        response = self.client.put('http://127.0.0.1:8000'+url, data={'item_id': armour.id})
         self.my_game = Game.objects.create()
         self.my_game.players.add(self.player_one)
         self.my_game.players.add(self.player_two)
@@ -157,7 +150,6 @@ class PlayerAttackTests(APITestCase):
         url = reverse('attack', args=(self.player_one.id, ))
         response = self.client.put(url, data={'attackee': self.player_two.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # pprint.pprint(response.json())
 
     @patch('game.weleem_utils.roll_dice')
     def test_other_player_attack_hit(self, dice_mock):
@@ -165,7 +157,6 @@ class PlayerAttackTests(APITestCase):
         url = reverse('attack', args=(self.player_two.id, ))
         response = self.client.put(url, data={'attackee': self.player_one.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # pprint.pprint(response.json())
 
     @patch('game.weleem_utils.roll_dice')
     def test_other_player_attack_hit_to_prone(self, dice_mock):
@@ -174,13 +165,11 @@ class PlayerAttackTests(APITestCase):
         url = reverse('attack', args=(self.player_one.id, ))
         response = self.client.put(url, data={'attackee': self.player_two.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        pprint.pprint(response.json())
         url = reverse('next-turn',args=(self.my_game.id, ))
         response = self.client.put(url)
         url = reverse('attack', args=(self.player_two.id, ))
         response = self.client.put(url, data={'attackee': self.player_one.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        pprint.pprint(response.json())
         url = reverse('next-turn',args=(self.my_game.id, ))
         response = self.client.put(url)
         url = reverse('attack', args=(self.player_two.id, ))
@@ -193,21 +182,17 @@ class PlayerAttackTests(APITestCase):
         url = reverse('attack', args=(self.player_two.id, ))
         response = self.client.put(url, data={'attackee': self.player_one.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        pprint.pprint(response.json())
         response = self.client.put(url, data={'attackee': self.player_one.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        pprint.pprint(response.json())
 
     def test_player_defend(self):
         url = reverse('defend', args=(self.player_one.id, ))
         response = self.client.put(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        pprint.pprint(response.json())
-        pass
 
     def test_next_turn(self):
         old_turn = self.my_game.current_round
         url = reverse('next-turn', args=(self.my_game.id, ))
         response = self.client.put(url)
         game = Game.objects.get(id=self.my_game.id)
-        self.assertEqual(game.current_round, 2)
+        self.assertEqual(game.current_round, 1)

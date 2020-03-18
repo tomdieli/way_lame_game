@@ -9,11 +9,9 @@ from game.models import Game, Figure, Item
 class RollDiceTests(TestCase):
     def test_one_die(self):
         my_roll = roll_dice()
-        print('one die: %s, total: %s' % (my_roll, sum(my_roll)))
 
     def test_three_dice(self):
         my_roll = roll_dice(3)
-        print('thre dice: %s, total: %s' % (my_roll, sum(my_roll)))
 
     def test_bad_values(self):
         pass
@@ -50,9 +48,7 @@ class AttackTests(TestCase):
     def test_attack_hit(self):
         self.roll_mock.return_value = [1, 2, 4]
         result = do_attack(self.attacker.adjusted_dex, 'Dagger')
-        print("Hit attack result: %s" % result)
 
     def test_attack_miss(self):
         self.roll_mock.return_value = [2,4,6]
         result = do_attack(self.attacker.adjusted_dex, 'Dagger')
-        print("Miss attack result: %s" % result)

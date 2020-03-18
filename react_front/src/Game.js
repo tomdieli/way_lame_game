@@ -9,7 +9,8 @@ class Game extends Component {
             id: this.props.gameID,
             player1: null,
             player2: null,
-            turn: 1,
+            turn: 0,
+            turnOrder: [],
             dialog: 'Game Has Begun!\n',
             fetching: false
         };
@@ -41,8 +42,11 @@ class Game extends Component {
         this.setState({fetching: true});
         axios.put('http://127.0.0.1:8000/arena/players/' + dodger + '/defend/')
           .then(res => {
+            let turnOrder = this.state.turnOrder;
+            turnOrder.shift();
             this.setState({
-                fetching: false
+                fetching: false,
+                turnOrder: turnOrder
             });
           });
     }
@@ -51,8 +55,11 @@ class Game extends Component {
         this.setState({fetching: true});
         axios.put('http://127.0.0.1:8000/arena/players/' + proneOne + '/get_up/')
           .then(res => {
+            let turnOrder = this.state.turnOrder;
+            turnOrder.shift()
             this.setState({
-                fetching: false
+                fetching: false,
+                turnOrder: turnOrder
             });
           });
     }
@@ -73,11 +80,14 @@ class Game extends Component {
             const p1 = res.data[1].findIndex((player) => player.id === this.state.player1.id)
             const p2 = res.data[1].findIndex((player) => player.id === this.state.player2.id)
             const dialog = this.state.dialog + res.data[0].message + '\n';
+            let turnOrder = this.state.turnOrder
+            turnOrder.shift()
             this.setState({
                 player1: res.data[1][p1],
                 player2: res.data[1][p2],
                 fetching: false,
-                dialog: dialog
+                dialog: dialog,
+                turnOrder: turnOrder
             });
           });
     }
@@ -86,30 +96,54 @@ class Game extends Component {
         this.setState({fetching: true});
         axios.put('http://127.0.0.1:8000/arena/games/' + this.state.id + '/next_turn/')
           .then(res => {
-            console.log(res.data);
             const p1 = res.data.data[1].findIndex((player) => player.id === this.state.player1.id)
             const p2 = res.data.data[1].findIndex((player) => player.id === this.state.player2.id)
+            let turnOrder = []
+            if(p1.adjusted_dex > p2.adjusted_dex) {
+                turnOrder = [res.data.data[1][p1].id, res.data.data[1][p2].id]
+            } else {
+                turnOrder = [res.data.data[1][p2].id, res.data.data[1][p1].id]
+            }
             this.setState({
                 player1: res.data.data[1][p1],
                 player2: res.data.data[1][p2],
                 fetching: false,
-                turn: res.data.data[0].current_round
+                turn: res.data.data[0].current_round,
+                turnOrder: turnOrder
             });
+            if(p1.hits < 1){
+                
+            }
           });
     }
 
     render() {
         if (this.state.fetching === true || this.state.player1 === null || this.state.player2 === null) {
             return <div>Waiting...</div>
+        } else if(this.state.turnOrder.length === 0){
+            this.nextTurn()
+            return null
         } else {
             return (
                 <div>
                     <h1>Welcome to Game {this.state.id}!!!</h1>
                     <h3>Round {this.state.turn}</h3>
                     <div className="playArea">
-                        <Player player={this.state.player1} attack={this.attack} getUp={this.getUp} dodge={this.dodge} />
+                        <Player 
+                            player={this.state.player1}
+                            attack={this.attack}
+                            getUp={this.getUp}
+                            dodge={this.dodge}
+                            isTurn={this.state.player1.id === this.state.turnOrder[0]}
+                        />
                         <textarea readOnly={true} value={this.state.dialog} rows="10" cols="80"/>
-                        <Player player={this.state.player2} attack={this.attack} getUp={this.getUp} dodge={this.dodge} />
+                        <Player
+                            player={this.state.player2}
+                            attack={this.attack}
+                            getUp={this.getUp}
+                            dodge={this.dodge}
+                            isTurn={this.state.player2.id === this.state.turnOrder[0]}
+                        />
                     </div>
                     <button onClick={this.nextTurn}>Next Turn</button>
                 </div>
@@ -128,13 +162,17 @@ function Player(props) {
     }
 
     function getPlayerOptions(props) {
-        return (
-            <div>
-            <button type="submit" disabled={props.player.prone} onClick={() => {props.attack(props.player.id)}}>Attack</button>
-            <button type="submit" disabled={!props.player.prone} onClick={() => {props.getUp(props.player.id)}}>Get Up</button>
-            <button type="submit" disabled={props.player.prone} onClick={() => {props.dodge(props.player.id)}}>Dodge</button>
-            </div>
-            )
+        if(props.isTurn) {
+            return (
+                <div>
+                <button type="submit" disabled={props.player.prone} onClick={() => {props.attack(props.player.id)}}>Attack</button>
+                <button type="submit" disabled={!props.player.prone} onClick={() => {props.getUp(props.player.id)}}>Get Up</button>
+                <button type="submit" disabled={props.player.prone} onClick={() => {props.dodge(props.player.id)}}>Dodge</button>
+                </div>
+                );
+        } else {
+            return <div>Waiting...</div>
+        }
     }
 
     if(props.player === null) {
