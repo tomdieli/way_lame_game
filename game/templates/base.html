@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<head>
+  <title>{% block title %}{% endblock %} - Waylame: The Blantasy Blip!!</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+</head>
+<nav>
+  <h1>WayLame: The Blantasy Blip!</h1>
+  <ul>
+    {% if user %}
+      <div>
+        <p style="text-align:right">
+          Logged in as <b>{{ user }}</b>
+          <br>
+          <a href="{% url 'logout' %}">Log Out</a>
+        </p>
+      </div>
+      
+    {% else %}
+      <li><a href="{% url 'register' %}">Register</a>
+      <li><a href="{% url 'login' %}">Log In</a>
+    {% endif %}
+  </ul>
+</nav>
+<section class="content">
+  <div class="flex-container">
+    {% block content %}{% endblock content%}
+  </div>
+</section>

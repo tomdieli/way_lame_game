@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Table{% endblock %}
+{% block header %}Table{% endblock %}
+{% block content %}
+  <div>
+    <h2> {{ player1.figure_name }}</h2>
+    <b>ST: {{ player1.strength }}<br>
+    DX: {{ player1.dexterity }}<br>
+    <h3>Items:</h3>
+      <ul>
+      {% for gear in player1.equipped_items %}
+        <li>{{ gear.name }}</li>
+        <ul>
+          {% for ikey, ival in gear.items %}
+            {% if ikey in 'damage_dice,damage_mod,hit_takes,adj_ma,dx_adj' and ival != 0 %}
+              <li>{{ ikey }}: {{ ival }}</li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      {% endfor %}
+      </ul>
+    <p>User: {{ user.id }}, Owner: {{ game.owner }}</p>
+    {% if game.owner == user.id %}
+      <input type="button" id="start-game" value="Start">start game</button>
+    {% endif %}
+  </div>
+  <div>
+    <h2>Table</h2>
+    <textarea name="status" id="status" cols="40" rows="20"></textarea>
+  </div>
+  <div id="otherPlayers">
+    <h3>The Players</h3>
+      <ul id="playerList">
+        {% for x in other_players %}
+          <li>{{ x.figure_name }}</li>
+        {% endfor %}
+      </ul>
+  </div>
+  {{ player1|json_script:"player1-data" }}
+  {{ game|json_script:"game-data" }}
+  {{ players|json_script:"players-data" }}
+
+  <script type="text/javascript" src="/static/js/room.js" defer></script>
+{% endblock content%}
+

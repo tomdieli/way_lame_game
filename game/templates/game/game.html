@@ -1,0 +1,58 @@
+<!-- templates/index.html -->
+{% load  static %}
+<!DOCTYPE html>
+<head>
+  <title>WayLame: The Blantasy Blip!</title>
+  <link href="{% static 'css/styles.css' %}" rel="stylesheet" media="screen">
+</head>
+<body>
+  <h1>Welcome to the Arena!</h1>
+  <div class="flex-container">
+    <div>
+      <h2> You are: <span id="p1Name">{{ player1.figure_name }}</span></h2>
+      <div>
+        <b>
+          <p>ST: <span id="{{ player1.figure_name }}_str">{{ player1.strength }}</span></p>
+          <p>DX: <span id="{{ player1.figure_name }}_dex">{{ player1.dexterity }}</span></p>
+          <p>ADJ_DX: <span id="{{ player1.figure_name }}_adx">{{ player1.dexterity }}</span></p>
+          <p>Hits: <span id="{{ player1.figure_name }}_hits">{{ player1.strength }}</span></p>
+          <h3>Penalties:<h3>
+          <div id="{{ player1.figure_name }}_penalties">
+          </div>
+          <h3>Actions:<h3>
+          <div id="{{ player1.figure_name }}_actions">
+          </div>
+        </b>
+      </div>
+    </div>
+    <div>
+      <h2>Game Status</h2>
+      <textarea name="status" id="status" cols="40" rows="20"></textarea>
+    </div>
+    <div>
+      <h2> The Other Players:</h2>
+      {% for player in players %}
+        {% if player.figure_name != player1.figure_name %}
+          <b>
+            <h1 id="{{ player.figure_name }}">{{ player.figure_name }}<h1>
+            <p>ST: <span id="{{ player.figure_name }}_str">{{ player.strength }}</span></p>
+            <p>DX: <span id="{{ player.figure_name }}_dex">{{ player.dexterity }}</span></p>
+            <p>ADJ_DX: <span id="{{ player.figure_name }}_adx">{{ player.dexterity }}</span></p>
+            <p>Hits: <span id="{{ player.figure_name }}_hits">{{ player.strength }}</span></p>
+            <h3>Penalties:<h3>
+            <div id="{{ player.figure_name }}_penalties">
+            </div>
+            <h3>Actions:<h3>
+            <div id="{{ player.figure_name }}_actions">
+            </div>
+          </b>
+        {% endif %}  
+      {% endfor %}
+    </div>
+  </div>
+  {{ game|json_script:"game-data" }}
+  {{ players|json_script:"players-data" }}
+  {{ player1|json_script:"player1-data"}}
+  <script type="module" src="/static/js/game.js"></script>
+</body>
+

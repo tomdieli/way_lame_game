@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Lobby{% endblock %}
+{% block header %}Lobby{% endblock %}
+{% block content %}
+  <div id="playerList">
+    <form action="{% url 'new-player' %}" method="get">
+      {% csrf_token %}
+      <button type="submit" name="create_figure" value="{{ user }}">Create Figure</button>
+    </form>
+    {% for figure in figures %}
+      {% if figure.owner == user %}
+        <h2>{{ figure.figure_name }}</h3>
+        <p>by {{ user }}</p>
+        <a class="action" href="{% url 'edit-attributes' figure.id %}">Edit {{ figure.figure_name }}</a>
+        <p id="{{ figure.figure_name }}">
+          <b>STRENGTH: {{ figure.strength }}, DX:{{ figure.dexterity }}</b>
+        </p>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div>
+    <h4>Welcome to the Lobby</h4>
+    <textarea name="status" id="status" cols="40" rows="20"></textarea>
+  </div>
+  <div id="otherUsers">
+    <h3> Other Users</h3>
+    <hr>
+    {% for other_user in users %}
+      {% if user.id != other_user.id %}
+        <b>{{ other_user.username }}</b>
+        <hr>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div id="gameList">
+    <h3>Games</h3>
+    {% if user %}
+      <button type="button" id="create_game">Create Game</button>
+    {% endif %}
+    {% if user %}
+      <ul id="gamesList">
+      {% for game in games %}
+        <li><b>Game {{ game.id }} </b>
+        <a class="action" href="{% url 'game-add' game.id%}">Join</a>
+        {% if game.owner == user %}
+          <a class="action" href="{% url 'game-delete' game.id%}">Delete</a><br>
+        {% endif %}
+        </li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  </div>  
+</div>
+{{ user.username|json_script:"user-name" }}
+
+<script type="module" src="/static/js/lobby.js" defer></script>
+{% endblock content%}

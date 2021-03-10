@@ -1,0 +1,7 @@
+<p>User: {{ user.username }}</p>
+
+<form action="{{ request.build_absolute_uri }}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Submit">
+</form>

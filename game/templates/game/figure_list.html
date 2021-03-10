@@ -1,0 +1,8 @@
+{% block content %}
+    <h2>Players</h2>
+    <ul>
+        {% for player in figure_list %}
+            <li>{{ player.id }} : {{ player.figure_name }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

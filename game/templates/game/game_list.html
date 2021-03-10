@@ -1,0 +1,8 @@
+{% block content %}
+    <h2>Games</h2>
+    <ul>
+        {% for game in game_list %}
+            <li>{{ game.id }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
