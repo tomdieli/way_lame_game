@@ -33,39 +33,5 @@ window.onload = (event) => {
     p['hits'] = p['strength']
   });
   gameTable.loadFigures(players)
-  gameTable.nextTurn()
-};
-
-gameSocket.onopen = function() {
-  console.log('game socket open.');
-};
-
-gameSocket.onclose = function(e) {
-  console.log('Game socket closed.');
-};
-
-gameSocket.onmessage = function(message) {
-  const my_message = JSON.parse(message.data)
-  const my_data = my_message['message']
-  if(my_data.action === "attack"){
-    gameTable.updatePlayer(my_data.attacker);
-    gameTable.updatePlayer(my_data.attackee);
-    if((my_data.attacker.id === pID) || (my_data.attackee.id === pID)){
-      gameTable.updatePlayerActions()
-    } 
-  } else if( my_data.action === "get-up" ) {
-    gameTable.updatePlayer(my_data.prone_one)
-    if(my_data.prone_one.id === pID){
-      gameTable.updatePlayerActions()
-    }
-  } else if( my_data.action === "pick-up" ) {
-    gameTable.updatePlayer(my_data.picker)
-    if(my_data.picker.id === pID){
-      gameTable.updatePlayerActions()
-    }
-  }
-  document.querySelector("#status").textContent += my_data.info_txt + "\n"
-  document.getElementById("status").scrollTop = document.getElementById("status").scrollHeight
-  
-  gameTable.nextPlayer()
+  gameTable.start()
 };
