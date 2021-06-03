@@ -25,6 +25,11 @@ def roll_dice(num_dice=1):
     return rolls
 
 
+def roll_init():
+    roll = roll_dice(3)
+    return roll
+    
+
 def do_attack(attacker_dx, weapon, disadvantage=False):
     if disadvantage:
         num_dice = 4
@@ -70,14 +75,14 @@ def do_attack(attacker_dx, weapon, disadvantage=False):
 
 def attack(attacker, attackee, weapon):
     attacker_name = attacker['figure_name']
-    attacker_dex = attacker['dexterity']
+    attacker_dex = attacker['adj_dx']
     attackee_name = attackee['figure_name']
     message = "player %s attacks player %s.\n" % (attacker_name, attackee_name)
     # weapon = attacker.items.exclude(damage_dice=0)
     if attackee['dodging']:
         message += "player %s is dodging. it's a 4-die roll. " % attackee_name
-        result = do_attack(attacker.adjusted_dex, weapon, disadvantage=True)
-        attackee.dodging = False
+        result = do_attack(attacker_dex, weapon, disadvantage=True)
+        attackee['dodging'] = False
     else:
         result = do_attack(attacker_dex, weapon)
         message += "Dice rolls: %s -> %s, Result: %s. " % (result['rolls'], result['roll'], result['status'])
@@ -97,17 +102,22 @@ def attack(attacker, attackee, weapon):
         attackee['hits'] -= damage
         if attackee['hits'] <= 0:
             attackee['hits'] = 0
+            attackee['penalties'].append('DEAD')
             message += "Player %s is DEAD!!!. " % attackee_name
-        if damage >= 8:
+        elif damage >= 8:
             message += "Player %s is PRONE due to heavy damage. " % attackee_name
-            attackee['prone'] = True
+            attackee['penalties'].append('prone')
         elif damage >= 5:
             message += "Player %s has -2 ADJ_DX next turn due to heavy damage. " % attackee_name
-            attackee['dx_adj'] = True
+            attackee['penalties'].append('dx_adj')
+        elif attackee['hits'] <= 3:
+            message += "Player %s has -3 ADJ_DX next turn due to low hits. " % attackee_name
+            attackee['penalties'].append('st_dx_adj')
+        
     elif 'Weapon' in result['status']:
         if weapon:
             message += "Player %s dropped his weapon. " % attacker_name
-            attacker['dropped_weapon'] = True
+            attacker['penalties'].append('dropped_weapon')
     result['message'] = message
     result['attacker'] = attacker
     result['attackee'] = attackee

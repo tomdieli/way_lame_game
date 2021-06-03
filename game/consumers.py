@@ -2,7 +2,7 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-from .weleem_utils import attack, create_game, delete_game
+from .weleem_utils import attack, create_game, delete_game, roll_init
 
 class LobbyConsumer(WebsocketConsumer):
     def connect(self):
@@ -78,7 +78,8 @@ class GameConsumer(WebsocketConsumer):
 
     def receive(self, text_data):
         message = json.loads(text_data)
-        action = message['action']    
+        action = message['action']
+        print(message)
         if action == "attack":
             print(message)
             attacker = message["attacker"]
@@ -92,9 +93,20 @@ class GameConsumer(WebsocketConsumer):
             message["info_txt"] = "%s has joined the game!" % (figure)
         elif action == "get_up":
             figure = message['prone_one']
-            figure["prone"] = False
+            figure.penalties.remove('prone')
             message["info_txt"] = "%s has has gotten up!" % (figure['figure_name'])
-        
+        elif action == "initiative":
+            name = message['name']
+            roll = roll_init()
+            message['roll'] = roll
+            message['info_txt'] = "%s rolled a %s" % (name, roll)
+        elif action == "pass":
+            figure_name = message['passer']
+            message['info_txt'] = "%s takes no actions." % figure_name
+        elif action == "dodge":
+            figure = message['dodger']
+            figure['dodging'] = True
+            message['info_txt'] = "%s is dodging." % figure['figure_name']
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,

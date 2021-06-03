@@ -39,9 +39,6 @@ def lobby(request):
 
     # Query all logged in users based on id list
     users = User.objects.filter(id__in=uid_list)
-    print('METH: %s' % request.GET.get('refresh_games', False))
-    # if request.method == "POST":
-    #     refresh_games = True
 
     context = {
         'users': users,
@@ -49,7 +46,6 @@ def lobby(request):
         'figures': figures,
         'refresh_games': refresh_games,
     }
-    # print("CTX: %s" % context)
     return render(request, 'game/index.html', context)
 
 
@@ -58,7 +54,6 @@ def join(request, game_id, figure_id):
     game = Game.objects.get(id=game_id)
     player1 = Figure.objects.get(id=figure_id)
     players = game.players
-    print("PLAYERS: %s" % players)
     context = {
         'game': GameSerializer(game).data,
         'player1': FigureSerializer(player1).data,
@@ -87,20 +82,6 @@ def game_delete(request, pk):
     game = Game.objects.get(id=pk)
     game.delete()
     return redirect('lobby')
-
-
-# Replaced by event driven solution in 'weleem utils'
-# class GameCreate(LoginRequiredMixin, RedirectView):
-#     # pattern_name = 'lobby'
-
-#     def post(self, request, *args, **kwargs):
-#         owner_id = request.POST['create_game']
-#         owner = User.objects.get(id=owner_id)
-#         game = Game.objects.create(owner=owner)
-#         game.save()
-#         print(f'ARGS: { args }, KWAS: { kwargs }')
-#         return redirect('lobby', refresh_games=True)
-
 
 class GameUpdate(LoginRequiredMixin, UpdateView):
     model = Game

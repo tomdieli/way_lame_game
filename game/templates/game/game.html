@@ -4,6 +4,8 @@
 <head>
   <title>WayLame: The Blantasy Blip!</title>
   <link href="{% static 'css/styles.css' %}" rel="stylesheet" media="screen">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.1.3/pixi.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/honeycomb-grid@3.1.8/dist/honeycomb.min.js"></script>
 </head>
 <body>
   <h1>Welcome to the Arena!</h1>
@@ -25,7 +27,8 @@
         </b>
       </div>
     </div>
-    <div>
+    <div id="board"></div>
+    <div id="statusBox">
       <h2>Game Status</h2>
       <textarea name="status" id="status" cols="40" rows="20"></textarea>
     </div>

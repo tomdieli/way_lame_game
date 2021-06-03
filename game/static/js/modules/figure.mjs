@@ -1,44 +1,61 @@
-import {Action} from './ui.mjs';
+import {PlayerPiece} from './marker.mjs';
+import {Action} from './action.mjs';
 
 export class Figure {
-  // TODO: Encapsulate update. Do a true render. Others?
-  constructor(figureData) {
+  constructor(figureData, startingCoords, hexFactory) {
     Object.assign(this, figureData);
-    this.opponents = [];
-    //this.gameSocket = null;
+    this.marker = new PlayerPiece(
+      PIXI.Texture.from("/static/images/blue-matreshka.png"),
+      hexFactory(startingCoords.x, startingCoords.y),
+      startingCoords.d
+    );
+    this.marker.name = this.figure_name;
     this.commands = {};
+    this.penalties = [];
   }
 
   update(data) {
-    Object.assign(this, data)
-    this.render()
+    Object.assign(this, data);
+    // this.doPenalties();
+    this.render();
   }
 
-  getStats(){
-    let stats = { ...this}
-    delete stats.opponents;
-    delete stats.commands;
-    return stats;
+  attackInfo(){
+    const info = (
+      ({ figure_name, adj_dx, equipped_items, penalties }) => (
+        { figure_name, adj_dx, equipped_items, penalties }
+      )
+    )(this);
+    return info;
   }
-  
+
+  defendInfo(){
+    const info = (
+      ({ figure_name, dodging, equipped_items, hits, penalties }) => (
+        { figure_name, dodging, equipped_items, hits, penalties }
+      )
+    )(this);
+    return info;
+  }
+
   render() {
-    let tag = this.figure_name;
-    let status = "";
-    // TODO: ternary op
-    if ( this.hits <= 0){
-      status = "DEAD";
-    } else {
-      status = this.hits;
-    }
+    const tag = this.figure_name;
+    const status = (this.hits <= 0) ? "DEAD" : this.hits;
     document.querySelector("#" + tag + "_hits").innerHTML = status;
     document.querySelector("#" + tag + "_adx").innerHTML = this.adj_dx;
-    for( let prop of ['prone', 'dx_adj', 'dropped_weapon']){
-      if (this.prop === true) {
-        let penaltyList = document.getElementById(tag + "_penalties");
-        let penalty = document.createTextNode(prop);    
-        penaltyList.appendChild( penalty );
-      }
+    const penaltyList = document.getElementById(tag + "_penalties");
+    while( penaltyList.firstChild ) {
+      penaltyList.removeChild(penaltyList.firstChild);
     }
+    for( const penalty of this.penalties ) {
+      const penaltyItem = document.createTextNode( penalty );    
+      penaltyList.appendChild( penaltyItem );
+    }
+  }
+
+  noActions() {
+    const actions = document.getElementById(this.figure_name + "_actions").childNodes;
+    return actions.length === 0;
   }
 
   enableActions() {
@@ -51,8 +68,12 @@ export class Figure {
   disableActions() {
     const actions = document.getElementById(this.figure_name + "_actions").childNodes
     for(const action of actions) {
-      action.disabled = true
+      action.disabled = true;
     }
+  }
+
+  getActions() {
+    return document.getElementById(this.figure_name + "_actions").childNodes
   }
 
   register(name, command) {
@@ -67,16 +88,20 @@ export class Figure {
       console.error("Command '" + commandName + "' not recognized.");
     };
   };
-            
-  updateActions() {
-    let actions = document.querySelector('#' + this.figure_name + '_actions')
+
+  clearActions(){
+    const actions = document.querySelector('#' + this.figure_name + '_actions')
     
     while( actions.firstChild ) {
       actions.removeChild(actions.firstChild);
     }
-
+    return actions;
+  }
+            
+  updateActions(gameState) {
+    const actions = this.clearActions();
     for(const commandName in this.commands) {
-      if(this.commands[commandName].rule(this)) {
+      if(this.commands[commandName].rule(this, gameState)) {
         this.addAction(commandName);
       }
     }
@@ -84,7 +109,7 @@ export class Figure {
 
   addAction(name) {
     let actionList = document.getElementById(this.figure_name + "_actions");
-    let newElement = Action.createAction(name, this, this.opponents);
+    let newElement = Action.createAction(name, this);
     actionList.appendChild(newElement);
   }
   
