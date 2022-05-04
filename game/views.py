@@ -21,7 +21,6 @@ from game.models import Game, Figure, Item
 from game.serializers import GameSerializer, FigureSerializer
 from game.serializers import ItemSerializer
 from game.forms import FigureForm
-from game.weleem_utils import do_attack
 
 
 @login_required
@@ -83,9 +82,9 @@ def game_delete(request, pk):
     game.delete()
     return redirect('lobby')
 
-class GameUpdate(LoginRequiredMixin, UpdateView):
-    model = Game
-    fields = ['id', 'current_round', 'players' ]
+# class GameUpdate(LoginRequiredMixin, UpdateView):
+#     model = Game
+#     fields = ['id', 'current_round', 'players' ]
 
 
 class GameAdd(LoginRequiredMixin, UpdateView):
@@ -110,12 +109,12 @@ class GameAdd(LoginRequiredMixin, UpdateView):
         return super(ModelFormMixin, self).form_valid(form)
 
 
-class GameList(ListView):
-    model = Game
+# class GameList(ListView):
+#     model = Game
 
 
-class GameShow(DetailView):
-    model = Game
+# class GameShow(DetailView):
+#     model = Game
     
 
 class PlayerCreate(LoginRequiredMixin, CreateView):

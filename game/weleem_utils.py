@@ -20,7 +20,6 @@ def roll_dice(num_dice=1):
     rolls = []
     for die in range(1, num_dice + 1):
         die_roll = random.randrange(1, 7)
-        # print('die %s of %s: %s' % (die, num_dice, die_roll))
         rolls.append(die_roll)
     return rolls
 
@@ -28,18 +27,36 @@ def roll_dice(num_dice=1):
 def roll_init():
     roll = roll_dice(3)
     return roll
-    
 
-def do_attack(attacker_dx, weapon, disadvantage=False):
+def pre_attack_info(weapon, disadvantage=False):
+    # Provides most info needed to perform the attack action.
+
+    attack_info = {}
     if disadvantage:
-        num_dice = 4
-        auto_miss = 20
-        fumble_mod = 2
+        attack_info['num_dice'] = 4
+        attack_info['auto_miss'] = 20
+        attack_info['fumble_mod'] = 2
     else:
-        num_dice=3
-        auto_miss = 16
-        fumble_mod = 1
-    rolls = roll_dice(num_dice)
+        attack_info['num_dice'] = 3
+        attack_info['auto_miss'] = 16
+        attack_info['fumble_mod'] = 1
+    attack_info['damage_dice'] = weapon['damage_dice']
+    attack_info['damage_mod'] = weapon['damage_mod']
+    return attack_info
+
+def get_hit_takes(inventory):
+    armourshields = [i for i in inventory if i['hit_takes'] != 0]
+    if armourshields:
+        desc = ''
+        hit_takes = 0
+        for armour in armourshields:
+            hit_takes = armour['hit_takes']
+            desc += f'{armour["name"]}, '
+    return hit_takes, desc
+
+def attack_results(binfo):
+    # contains the info that will be published to each player.
+    rolls = roll_dice(binfo['num_dice'])
     attack_roll = sum(rolls)
     attack_dict = {
             'status': None,
@@ -48,14 +65,12 @@ def do_attack(attacker_dx, weapon, disadvantage=False):
             'damage_rolls': [],
             'damage': 0,
     }
-    if ((attacker_dx >= attack_roll) and (attack_roll <= auto_miss)) or\
+    if ((binfo['attacker_dx'] >= attack_roll) and (attack_roll <= binfo['auto_miss'])) or\
             (attack_roll <= 5):
         attack_dict['status'] = 'Hit'
-        damage_dice = weapon['damage_dice']
-        damage_mod = weapon['damage_mod']
-        damage_rolls = roll_dice(damage_dice)
+        damage_rolls = roll_dice(binfo['damage_dice'])
         damage_roll = sum(damage_rolls)
-        attack_damage = damage_roll + damage_mod
+        attack_damage = damage_roll + binfo['damage_mod']
         if attack_roll == 3:
             attack_damage *= 3
             attack_dict['status'] += '-TripleDamage'
@@ -65,39 +80,35 @@ def do_attack(attacker_dx, weapon, disadvantage=False):
         attack_dict['damage_rolls'] = damage_rolls
         attack_dict['damage'] = attack_damage
     else:
+        # TODO: get broken weapon to work
         attack_dict['status'] = 'Miss'
-        if attack_roll >= auto_miss + fumble_mod:
+        if attack_roll >= binfo['auto_miss'] + binfo['fumble_mod']:
             attack_dict['status'] += '-DroppedWeapon'
-        elif attack_roll >= auto_miss + (fumble_mod * 2):
+        elif attack_roll >= binfo['auto_miss'] + (binfo['fumble_mod'] * 2):
             attack_dict['status'] += '-BrokenWeapon'
     return attack_dict
 
-
+# this one called first
 def attack(attacker, attackee, weapon):
+    battle_info = pre_attack_info(weapon, attackee['dodging'])
+    battle_info['hit_takes'], battle_info['armor'] = get_hit_takes(attackee['equipped_items'])
+    battle_info['attacker_dx'] = attacker['adj_dx']
     attacker_name = attacker['figure_name']
-    attacker_dex = attacker['adj_dx']
     attackee_name = attackee['figure_name']
     message = "player %s attacks player %s.\n" % (attacker_name, attackee_name)
-    # weapon = attacker.items.exclude(damage_dice=0)
+    result = attack_results(battle_info)
     if attackee['dodging']:
         message += "player %s is dodging. it's a 4-die roll. " % attackee_name
-        result = do_attack(attacker_dex, weapon, disadvantage=True)
         attackee['dodging'] = False
-    else:
-        result = do_attack(attacker_dex, weapon)
-        message += "Dice rolls: %s -> %s, Result: %s. " % (result['rolls'], result['roll'], result['status'])
+    message += "Dice rolls: %s -> %s, Result: %s. " % (result['rolls'], result['roll'], result['status'])
     if result['status'].startswith('Hit'):
         message += "Damage dice rolls: %s -> %s, Result: %s " % (result['damage_rolls'], result['damage'], result['status'])
         damage = result['damage']
-        armourshields = [i for i in attackee['equipped_items'] if i['hit_takes'] != 0]
-        if armourshields:
-            hit_takes = 0
-            for armour in armourshields:
-                hit_takes = armour['hit_takes']
-                message += "%s removes %s hits from the damage total of %s. " % (armour['name'], hit_takes, damage)
-                damage -= hit_takes
-                if damage < 0:
-                    damage = 0
+        message += f"{battle_info['armor']} removes {battle_info['hit_takes']}" 
+        f"hits from the damage total of {damage}. "
+        damage -= battle_info['hit_takes']
+        if damage < 0:
+            damage = 0
         message += "Total damage to Player %s: %s. " % (attackee_name, damage)
         attackee['hits'] -= damage
         if attackee['hits'] <= 0:

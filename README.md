@@ -1,5 +1,9 @@
-# arena
+# Way Lame: The Blantasy Blip
 
-Creating a virtual environment is recommended.
+A tribute to one of my all time favorite microgames. Still a work in progress.
 
-Use pip to install the requirements and you should be good to go.
+### The Main Players
+* Django(using channels for WebSocket Consumption)
+* My funky ES6-style js.
+
+

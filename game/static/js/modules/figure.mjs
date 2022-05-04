@@ -1,12 +1,13 @@
 import {PlayerPiece} from './marker.mjs';
 import {Action} from './action.mjs';
+import { Hex } from './map.mjs';
 
 export class Figure {
-  constructor(figureData, startingCoords, hexFactory) {
+  constructor(figureData, startingCoords) {
     Object.assign(this, figureData);
     this.marker = new PlayerPiece(
       PIXI.Texture.from("/static/images/blue-matreshka.png"),
-      hexFactory(startingCoords.x, startingCoords.y),
+      Hex(startingCoords.x, startingCoords.y),
       startingCoords.d
     );
     this.marker.name = this.figure_name;

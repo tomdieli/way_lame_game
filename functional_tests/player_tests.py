@@ -136,7 +136,7 @@ class NewPlayerTest(StaticLiveServerTestCase):
         sleep(3)
 
         # Edith starts a new game
-        self.browser.find_element_by_name("create_game").click()
+        self.browser.find_element_by_id("create_game").click()
         sleep(3)
         
         # Edith decides she wants to delete the game

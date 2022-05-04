@@ -29,7 +29,7 @@ export function newGame(userName, thisUser, gameID, infoText, sock){
     newNode.innerHTML = "Game " + gameID + " By " + userName
     let joinLink = document.createElement('a')
     joinLink.innerHTML = " JOIN "
-    joinLink.setAttribute('href', 'arena/games/' + gameID + '/add/' )
+    joinLink.setAttribute('href', 'games/' + gameID + '/add/' )
     newNode.appendChild(joinLink)
     if( userName === thisUser ){
       let deleteButton = document.createElement('button')

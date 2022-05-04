@@ -1,4 +1,4 @@
-import { Table } from './modules/table.mjs';
+import {ClientManager} from './modules/manager.mjs'
 
 // Support TLS-specific URLs, when appropriate.
 if (window.location.protocol == "https:") {
@@ -21,9 +21,11 @@ const gameSocket = new WebSocket(
   + '/'
 );
 
-var gameTable = new Table(game, pID, pName, gameSocket);
+// replace with gamemanager
+// var gameTable = new Table(game, pID, pName, gameSocket);
 
 // add the additional attributes to players so we can play the game.
+// todo: this should be extracted.
 window.onload = () => {
   players.forEach(p => {
     p['dodging'] = false
@@ -34,12 +36,18 @@ window.onload = () => {
     p['hits'] = p['strength']
   });
 
+  // this is stupid.
   const board = document.getElementById("board");
   board.oncontextmenu = function () {
     return false;     // cancel default menu
   }
-  board.appendChild(gameTable.playField.view);
-  const hexFactory = gameTable.playField.gameBoard.Hex;
-  gameTable.loadFigures(players, hexFactory);
-  gameTable.start();
+
+  //
+  //board.appendChild(gameTable.playField.view);
+  //const hexFactory = gameTable.playField.gameBoard.Hex;
+  //gameTable.loadFigures(players, hexFactory);
+  //gameTable.start();
+
+  const gameManager = new ClientManager(gameSocket, players);
+  gameManager.startGame();
 };
