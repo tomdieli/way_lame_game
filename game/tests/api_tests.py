@@ -22,10 +22,7 @@ class LobbyTests(TestCase):
         self.assertTemplateUsed('game/index_new.html')
 
     def test_go_to_login(self):
-        # user = User.objects.create_user(username='jacob', password='top_secret')
         client = Client()
-        #client.login(username='jacob', password='top_secret')
-
         url = reverse('lobby')
         response = client.get(url, follow=True)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

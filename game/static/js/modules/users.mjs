@@ -1,5 +1,11 @@
 export const name = 'users';
 
+// what happens to the UI when user joins lobby
+//
+// -announce in status box
+// -update/refresh list of users
+// 
+
 export function announce(userName, thisName, infoText){
     let found = null
     let currentElements = document.getElementById('otherUsers').childNodes;
@@ -21,7 +27,6 @@ export function announce(userName, thisName, infoText){
 
 export function newGame(userName, thisUser, gameID, infoText, sock){
     let socko = sock
-    console.log("Stub for New Game")
     document.querySelector("#status").textContent += infoText + "\n"
     document.getElementById("status").scrollTop = document.getElementById("status").scrollHeight
     let theList = document.getElementById('gamesList')

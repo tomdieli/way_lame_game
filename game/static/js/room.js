@@ -51,7 +51,7 @@ gameSocket.onopen = function() {
   gameSocket.send(JSON.stringify(join_game));
 };
 
-startButton = document.querySelector("#start-game")
+startButton = document.querySelector("#start-game");
 
 if ( startButton !== null ) {
   startButton.addEventListener("click", (event) => {
@@ -66,7 +66,7 @@ if ( startButton !== null ) {
       gameSocket.send(JSON.stringify(start_game));
     }
     else {
-      alert("More Than 1 player required!")
+      alert("More Than 1 player required!");
     }
-  })
+  });
 }

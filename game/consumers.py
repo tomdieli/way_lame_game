@@ -6,7 +6,6 @@ from .weleem_utils import attack, create_game, delete_game, roll_init
 
 class LobbyConsumer(WebsocketConsumer):
     def connect(self):
-        print("JOINING Lobby, CHANNEL %s" % self.channel_name)
         async_to_sync(self.channel_layer.group_add)(
             'Lobby',
             self.channel_name
@@ -21,8 +20,7 @@ class LobbyConsumer(WebsocketConsumer):
 
     def receive(self, text_data):
         message = json.loads(text_data)
-        action = message['action']
-        print('message: %s' % message)    
+        action = message['action'] 
         if action == "join-lobby":
             user = message['user_name']
             message["info_txt"] = "%s has joined the lobby!" % (user)
@@ -30,14 +28,13 @@ class LobbyConsumer(WebsocketConsumer):
             user = message['user_name']
             game_id = create_game(user)
             message["info_txt"] = "%s has created game %s." % (user, game_id)
-            message['game_id'] = game_id
+            message["game_id"] = game_id
         elif action == "delete-game":
             user = message['user_name']
             game_id = message['game_id']
             print("Deleting game %s" % game_id)
-            result_info = delete_game(game_id)
-            message["info_txt"] = "%s has deleted game %s.\n%s" % (user, game_id, result_info)
-            message['game_id'] = game_id
+            delete_game(game_id)
+            message["info_txt"] = "%s has deleted game %s." % (user, game_id)
         
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
