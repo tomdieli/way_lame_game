@@ -14,7 +14,6 @@ def test_roll_dice(monkeypatch):
       return 3
 
   monkeypatch.setattr(random, "randrange", mock_randrange)
-
   assert roll_dice() == [3]
   assert roll_init() == [3, 3, 3]
   assert roll_dice(0) == []
@@ -35,7 +34,6 @@ def test_pre_attack_info():
     'damage_dice':1,
     'damage_mod':-1,
   }
-
   assert pre_attack_info(dagger, True) == {
     'num_dice':4,
     'auto_miss':20,
@@ -58,11 +56,6 @@ def test_get_hit_takes():
   assert desc == 'Leather Armour, '
 
 
-# def roll_dice_side_effect():
-#     def _roll_dice_side_effect(effects):
-#         return effects
-#     return _roll_dice_side_effect
-
 @pytest.fixture
 def mock_roll_dice(mocker):
   def _mock_roll_dice(*effects):
@@ -73,6 +66,7 @@ def mock_roll_dice(mocker):
       side_effect=effs
     )
   return _mock_roll_dice
+
 
 @pytest.mark.parametrize(
   ("dieroll, expect"),
@@ -98,9 +92,6 @@ def test_attack_results_dice(mock_roll_dice, dieroll, expect):
   mock_roll_dice(*dieroll)
   assert attack_results(attack_info) == expect
 
-# need to mock get hit takes
-# need to mock pre-attack info
-# need to pro
 
 @pytest.fixture
 def mock_get_hit_takes(mocker):

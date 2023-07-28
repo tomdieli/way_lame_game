@@ -21,11 +21,8 @@ const gameSocket = new WebSocket(
   + '/'
 );
 
-// replace with gamemanager
-// var gameTable = new Table(game, pID, pName, gameSocket);
-
 // add the additional attributes to players so we can play the game.
-// todo: this should be extracted.
+// TODO: This is no longer relevant. We do centralized control now.
 window.onload = () => {
   players.forEach(p => {
     p['dodging'] = false

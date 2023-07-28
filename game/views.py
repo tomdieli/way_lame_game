@@ -1,21 +1,14 @@
 from django.urls import reverse_lazy
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect
 from django.views.generic import ListView, DetailView
-from django.views.generic.base import RedirectView
-
 from django.views.generic.edit import CreateView, DeleteView, UpdateView, ModelFormMixin
 from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.template import RequestContext
 from django.utils import timezone
-from django.forms.widgets import Select
 
-from rest_framework import status
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
 
 from game.models import Game, Figure, Item
 from game.serializers import GameSerializer, FigureSerializer

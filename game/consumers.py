@@ -1,8 +1,93 @@
 import json
+
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
+from .managers import GameManager
 from .weleem_utils import attack, create_game, delete_game, roll_init
+
+class GamesConsumer(WebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.active_games = {}
+        self.active_users = []
+
+    def connect(self):
+        # print("SCOPE: %s" % self.scope)
+        if len(self.scope["headers"]) != 0:
+            room_id = self.scope["headers"].rsplit('/', 1)[-1]
+        else:
+            room_id = self.scope["path"].rsplit('/', -1)[-2]
+        # print("ID: %s" % room_id)
+        if room_id != 'lobby':
+            self.room_group_name = 'game_%s' % room_id
+        else:
+            self.room_group_name = 'Lobby'
+        # self.room_name = self.scope['url_route']['kwargs']['game_id']
+        # self.room_group_name = 'game_%s' % self.room_name
+        # Join room group
+        print("JOINING %s, CHANNEL %s" % (self.room_group_name, self.channel_name))
+        async_to_sync(self.channel_layer.group_add)(
+            self.room_group_name,
+            self.channel_name
+        )
+        self.accept()
+        print("game consumer connected")
+
+    def disconnect(self, close_code):
+        async_to_sync(self.channel_layer.group_discard)(
+            self.room_group_name,
+            self.channel_name
+        )
+        print("game consumer disconnected")
+
+    def receive(self, text_data):
+        """
+        Decodes text_data get 2 peices of info:
+            - The user name.
+            - The game ID.
+
+        Adds 'info_text' to send back to game participants,
+        in addition to the original received info.
+        """
+        message = json.loads(text_data)
+        action = message['action'] 
+        if action == "join-lobby":
+            user = message['user_name']
+            message["info_txt"] = "%s has joined the lobby!" % (user)
+        elif action == "new-game":
+            user = message['user_name']
+            game_id = create_game(user)
+            game_manager = GameManager('game_%s' % game_id)
+            self.active_games['game %s' % game_id] = game_manager
+            message["info_txt"] = "%s has created game %s." % (user, game_id)
+            message["game_id"] = game_id
+        elif action == "delete-game":
+            user = message['user_name']
+            game_id = message['game_id']
+            print("Deleting game %s" % game_id)
+            delete_game(game_id)
+            del self.active_games['game_%s' % game_id]
+            message["info_txt"] = "%s has deleted game %s." % (user, game_id)
+        
+        # Send message to room group
+        async_to_sync(self.channel_layer.group_send)(
+            'Lobby',
+            {
+                'type': 'lobby_message',
+                'message': message
+            }
+        )
+
+    def lobby_message(self, event):
+        message = event['message']
+
+        # Send message to WebSocket
+        self.send(text_data=json.dumps({
+            'message': message
+        }))
+
+    
 
 class LobbyConsumer(WebsocketConsumer):
     def connect(self):
@@ -19,6 +104,14 @@ class LobbyConsumer(WebsocketConsumer):
         )
 
     def receive(self, text_data):
+        """
+        Decodes text_data get 2 peices of info:
+            - The user name.
+            - The game ID.
+
+        Adds 'info_text' to send back to game participants,
+        in addition to the original received info.
+        """
         message = json.loads(text_data)
         action = message['action'] 
         if action == "join-lobby":
@@ -55,6 +148,30 @@ class LobbyConsumer(WebsocketConsumer):
 
 
 class GameConsumer(WebsocketConsumer):
+    """
+    'GameMaster' would be a more appropriate name. It tracks the game state
+    as well as the player turn order and phases.
+
+    The message data received will be relevant based on 1 to 2 primary factors:
+        -The game phase for a given turn.
+        -Any phase-specific data( if appropriate )
+
+    The game phases defined are:
+        - 'pre-game' ( This occurs only once in the game lifetime. The rest are every turn.)
+        - initiative
+        - movement
+        - action
+
+    Look below for phase-specific data requirements.
+
+    The player turn order is also tracked here. The end of all players turn in a
+    given game phase drives the transition to the next phase for all players. The 
+    following are always included and sent back to the players to update their state:
+        - game-phase
+        - game-round
+        - next-player
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.master_list = []
@@ -70,7 +187,7 @@ class GameConsumer(WebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['game_id']
         self.room_group_name = 'game_%s' % self.room_name
         # Join room group
-        print("JOINING %s, CHANNEL %s" % (self.room_group_name, self.channel_name))
+        # print("JOINING %s, CHANNEL %s" % (self.room_group_name, self.channel_name))
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
             self.channel_name
@@ -87,15 +204,21 @@ class GameConsumer(WebsocketConsumer):
 
     def receive(self, text_data):
         # todo: extract!!!!
+        # print("SCOPE: %s" % self.scope)
         message = json.loads(text_data)
         action = message['action']
-        print(message)
+        # print(message)
         if self.game_phase == 'pre-game':
+            # Adds players to the master_list, and thus to the game
             if action == "join-game":
                 figure = message['figure_name']
                 message["info_txt"] = "%s has joined the game!" % (figure)
                 self.master_list.append(figure)
         elif self.game_phase == 'initiative':
+            # A convoluded process which to determine player initiative for a given turn
+            # not a lot of data to work with. 'name'(the figure name rolling) and 'roll'
+            # as generated for this figure. The showdown funtion is for figures with the
+            # same dex.
             if action == "initiative":
                 def showdown(roll_data):
                     ordered = []
@@ -123,6 +246,7 @@ class GameConsumer(WebsocketConsumer):
                     self.init_rolls[roll] = [name]
                 message['info_txt'] = "%s rolled a %s" % (name, roll)
             elif action == "pass":
+                # There should always be an out
                 figure_name = message['passer']
                 self.passing.append(figure_name)
                 message['info_txt'] = "%s takes no actions." % figure_name
@@ -134,7 +258,11 @@ class GameConsumer(WebsocketConsumer):
                 self.init_rolls = {}
                 self.passing = []
         elif self.game_phase == 'movement':
+            # handles player movement, as well as transitioning to the action phase.
             # if no next player, phase = action, do action initiative.
+            # uses current_order to determine phase change.
+            #
+            # 'name' and 'adj_dx' are all that's needed.
             name = message['name']
             adx = message['adj_dx']
             # add to hash
@@ -147,8 +275,18 @@ class GameConsumer(WebsocketConsumer):
                 self.current_player = self.current_order.pop()
                 self.game_phase = 'action'
         elif self.game_phase == 'action':
+            # The meat of the player round.
+            # needs the following data:
+            #   -attaker( figure_name )
+            #   -attackee( figure_name )
+            #   -attacker weapon used
+            #
+            # The resulting combat data will be announced to all players.
+            # 
+            # Also responsible for transitioning to the next round's initiative
+            # phase using 'current_order'.
             if action == "attack":
-                print(message)
+                # print(message)
                 attacker = message["attacker"]
                 attackee = message["attackee"]
                 weapon = message["weapon"]
